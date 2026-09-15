@@ -10,7 +10,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Noto+Serif+KR:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- PDF 생성용 html2pdf.js 정식 탑재 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
@@ -560,7 +559,6 @@
           </select>
         </div>
 
-        <!-- 4대 맞춤 테마 탭 영역 -->
         <div style="margin-top:16px; border-top:1px dashed rgba(255,255,255,0.12); padding-top:14px;">
           <div style="font-size:12.5px; font-weight:700; color:var(--gold-bright); margin-bottom:6px;">✦ 핵심 상담 및 비책서 테마 선택</div>
           <div class="theme-tab-grid">
@@ -570,7 +568,6 @@
             <div class="btn-theme-tab" onclick="selectThemeTab('business', this)">직장/사업</div>
           </div>
 
-          <!-- 궁합/재회 선택 시 전개되는 상대방 정보창 -->
           <div id="themeBox_love" class="theme-dynamic-box">
             <div style="font-size:12px; font-weight:700; color:var(--gold-bright); margin-bottom:8px;">[궁합·재회 상대방 명식 입력]</div>
             <div class="form-row" style="margin-bottom:8px;">
@@ -591,7 +588,6 @@
             </div>
           </div>
 
-          <!-- 택일 선택 시 전개되는 희망 시기 및 목적창 -->
           <div id="themeBox_taekil" class="theme-dynamic-box">
             <div style="font-size:12px; font-weight:700; color:var(--gold-bright); margin-bottom:8px;">[대길일(大吉日) 맞춤 택일 조건]</div>
             <div class="form-row" style="margin-bottom:8px;">
@@ -618,7 +614,6 @@
 
   </div>
 
-  <!-- [1:1 실시간 상담 채팅 모달] -->
   <div id="chatModal" class="jieum-layer-mask">
     <div class="chat-modal-box">
       <div class="chat-hdr">
@@ -654,7 +649,6 @@
     </div>
   </div>
 
-  <!-- [목적 선택 모달] -->
   <div id="actionChoiceModal" class="jieum-layer-mask">
     <div class="choice-box">
       <div style="font-size:12px; color:var(--gold-main); font-weight:700; letter-spacing:2px; margin-bottom:6px;">ACQUIRED BENEFIT</div>
@@ -674,7 +668,6 @@
     </div>
   </div>
 
-  <!-- [1년 비책 사주서 모달] -->
   <div id="bicheckViewerModal" class="jieum-layer-mask">
     <div class="bicheck-view-box">
       <div class="bicheck-hdr">
@@ -690,7 +683,6 @@
           <div style="font-size:16px; font-weight:700; color:#111827; margin-bottom:6px;" id="bicheckLoadingTitle">명인의 정통 명리 분석 및 비책서 집필 중...</div>
           <div style="font-size:13px; color:#6B7280;" id="bicheckRetryNotice">내담자의 사주 원국과 선택 테마, 그리고 나누신 상담 대화 내역을 면밀히 감수하고 있습니다. (약 8~15초 소요)</div>
         </div>
-        <!-- 실제 렌더링 및 PDF 변환 컨테이너 -->
         <div id="bicheckPdfTarget" style="display:none;"></div>
       </div>
       <div class="bicheck-ftr">
@@ -700,7 +692,6 @@
     </div>
   </div>
 
-  <!-- [쿠폰 등록 모달] -->
   <div id="couponModal" class="jieum-layer-mask">
     <div class="modal-card">
       <button type="button" class="btn-close-modal" onclick="document.getElementById('couponModal').style.display='none'">✕</button>
@@ -716,7 +707,6 @@
     </div>
   </div>
 
-  <!-- [고객센터 1:1 문의 접수] -->
   <div id="inquiryModal" class="jieum-layer-mask">
     <div class="modal-card">
       <button type="button" class="btn-close-modal" onclick="document.getElementById('inquiryModal').style.display='none'">✕</button>
@@ -740,7 +730,6 @@
     </div>
   </div>
 
-  <!-- [공정위 정식 인허가 일치 푸터] -->
   <footer class="jieum-footer">
     <div class="footer-content">
       <div class="footer-biz-grid">
@@ -774,14 +763,7 @@
   </footer>
 
   <script>
-    // =================================================================
-    // 1. [구글 Gemini API Key 설정]
-    // =================================================================
     const GEMINI_API_KEY = "AQ.Ab8RN6Kw45SiCQNI38J7bAAl7Gcymc53VJbkzkI0IX1WIC_6Ng";
-
-    // =================================================================
-    // 2. [구글 스프레드시트 실시간 Apps Script Web App 연동 주소]
-    // =================================================================
     const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGmAFUWKZc7LCv7toGfab4T8OSI1s0AGo7iPguXCz-K-GvwIVry-aYlceuV_x6WX0C/exec";
 
     const FALLBACK_COUPONS = {
@@ -1063,10 +1045,8 @@
       container.scrollTop = container.scrollHeight;
     }
 
-    // 0.8초 딜레이용 헬퍼 함수
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-    // [택일 결제 유도 + 5회 자동 재시도 Fallback 체계]
     async function executeChat() {
       const input = document.getElementById("chatUserMsg");
       const sendBtn = document.getElementById("chatSendBtn");
@@ -1078,7 +1058,6 @@
 
       const counselor = COUNSELORS[selectedCounselorKey] || COUNSELORS['hyean'];
 
-      // 택일 질문 감지 시 무료 답변에서 날짜 남발 차단 & 결제 단칼 유도
       const isAskingTaekil = /(길일|날짜|택일|오픈일|이사날|결혼날|언제\s*오픈|언제\s*이사|언제\s*결혼)/.test(text);
 
       if (isAskingTaekil) {
@@ -1149,13 +1128,11 @@
    - 3. 실천 처방: 내담자가 즉시 행해야 할 핵심 조언 한 가지
 4. 마지막은 "더 깊은 12개월 월별 승부수와 손재수 방어책은 정밀 비책서에서 확인하십시오."로 끝맺으십시오.`;
 
-      // 5회 재시도 모델 리스트 (503 과부하 완벽 방어)
+      // gemini-3.6-flash 단일 모델로만 3회 안전 재시도
       const chatModels = [
-        "gemini-2.5-flash",
-        "gemini-1.5-flash",
-        "gemini-2.0-flash",
-        "gemini-2.5-flash",
-        "gemini-1.5-flash"
+        "gemini-3.6-flash",
+        "gemini-3.6-flash",
+        "gemini-3.6-flash"
       ];
 
       let aiReply = null;
@@ -1178,17 +1155,17 @@
             const data = await response.json();
             if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
               aiReply = data.candidates[0].content.parts[0].text;
-              break; // 5회 중 하나라도 성공 시 즉시 루프 탈출
+              break;
             }
           } else {
             const errBody = await response.json().catch(() => ({}));
             lastErrorText = `[${modelName} 상태 ${response.status}] ${errBody.error?.message || response.statusText}`;
-            await sleep(800); // 일시 과부하 대기 후 다음 차수 재시도
+            await sleep(1000);
             continue;
           }
         } catch (netErr) {
           lastErrorText = netErr.message;
-          await sleep(800);
+          await sleep(1000);
           continue;
         }
       }
@@ -1200,7 +1177,7 @@
         appendAiMessage(aiReply, true, isOutOfQ);
         chatConversationHistory.push({ speaker: counselor.name, text: aiReply });
       } else {
-        appendAiMessage(`[서버 일시 지연]\n구글 AI 서버 과부하로 5회 자동 재시도 후에도 연결이 지연되었습니다. (${lastErrorText})\n잠시 후 다시 한번 '전송'을 눌러주십시오.`);
+        appendAiMessage(`[서버 일시 지연]\n구글 AI 서버 과부하로 재시도 후에도 연결이 지연되었습니다. (${lastErrorText})\n잠시 후 다시 한번 '전송'을 눌러주십시오.`);
       }
 
       sendBtn.disabled = false;
@@ -1262,9 +1239,7 @@
       return html;
     }
 
-    // [비책서 5회 자동 재시도 및 서책형 완결 생성기]
     async function generateAndOpenBicheckViewer() {
-      // Gatekeeper 검증: 결제 승인 또는 유효 쿠폰 없으면 절대 진입 불가
       if (!isAuthorizedForReport && !validatedActiveCoupon) {
         alert("※ 1년 맞춤 비책 사주서는 신용카드 복채 결제 또는 유효한 비책 쿠폰 번호 인증 후에만 열람하실 수 있습니다.\n화면 상단의 [신용카드 결제] 또는 [비책 쿠폰]을 이용해 주십시오.");
         return;
@@ -1357,13 +1332,11 @@ ${chatHistoryContext}
 
 각 장은 반드시 '# 제1장 : ...' 형식의 헤더로 시작하십시오.`;
 
-      // 비책서 5회 자동 재시도 루프
+      // 비책서 역시 gemini-3.6-flash 단일 모델로만 3회 안전 재시도
       const bicheckModels = [
-        "gemini-2.5-flash",
-        "gemini-1.5-flash",
-        "gemini-2.0-flash",
-        "gemini-2.5-flash",
-        "gemini-1.5-flash"
+        "gemini-3.6-flash",
+        "gemini-3.6-flash",
+        "gemini-3.6-flash"
       ];
 
       let rawText = null;
@@ -1391,12 +1364,12 @@ ${chatHistoryContext}
           } else {
             const errBody = await response.json().catch(() => ({}));
             lastBicheckError = `[${bModel} ${response.status}] ${errBody.error?.message || response.statusText}`;
-            await sleep(800);
+            await sleep(1000);
             continue;
           }
         } catch (e) {
           lastBicheckError = e.message;
-          await sleep(800);
+          await sleep(1000);
           continue;
         }
       }
@@ -1435,7 +1408,7 @@ ${chatHistoryContext}
           validatedActiveCoupon = null;
         }
       } else {
-        pdfTarget.innerHTML = `<div style="padding:20px; color:#DC2626;">[서버 일시 지연 안내]<br>구글 서버 과부하로 5회 자동 재시도 후에도 집필이 지연되었습니다. (${lastBicheckError})<br>잠시 후 다시 열어주십시오.</div>`;
+        pdfTarget.innerHTML = `<div style="padding:20px; color:#DC2626;">[서버 일시 지연 안내]<br>구글 서버 과부하로 재시도 후에도 집필이 지연되었습니다. (${lastBicheckError})<br>잠시 후 다시 열어주십시오.</div>`;
       }
     }
 
