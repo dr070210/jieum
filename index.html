@@ -660,9 +660,9 @@
           <strong id="choiceBookTitle">📖 정밀 1년 맞춤 비책 사주서 열람</strong>
           <span id="choiceBookDesc">선택 테마 정밀 판결 + 12개월 개운 비책을 실시간 집필합니다.</span>
         </div>
-        <div class="btn-choice" onclick="document.getElementById('actionChoiceModal').style.display='none'; currentRemainQuestions += 5; openChatSessionDirect();">
+        <div class="btn-choice" onclick="document.getElementById('actionChoiceModal').style.display='none'; currentRemainQuestions += 5; isPaidSession=true; openChatSessionDirect();">
           <strong id="choiceConsultTitle">💬 전문 명인과 1:1 심층 질문권 (5회)</strong>
-          <span>선택하신 명인과 즉시 실시간 질문 세션을 시작합니다.</span>
+          <span>선택하신 명인과 즉시 심층 질문 세션을 시작합니다.</span>
         </div>
       </div>
     </div>
@@ -837,6 +837,7 @@
     let selectedCounselorKey = "hyean";
     let selectedProductCode = "P_CONSULT";
     let currentRemainQuestions = 2;
+    let isPaidSession = false; // 유료(쿠폰충전/결제) 심층 세션 여부
     let chatConversationHistory = [];
     let validatedActiveCoupon = null;
     let isAuthorizedForReport = false;
@@ -1012,7 +1013,7 @@
 
         const leadMessage = isOutOfQuestions
           ? `부여된 맛보기 무료 2문이 모두 소진되었습니다. 정작 칼날을 빼어 들어야 할 <strong>10년 대운의 분기점과 12개월 월별 손재수 방어책</strong>은 아직 펼쳐지지 않았습니다. 지금 나눈 상담 내용까지 고스란히 담아 <strong>평생 소장할 [1년 맞춤 ${counselor.isVip ? 'VIP' : '전문'} 비책서]</strong>를 열람하시거나, 추가 질문권을 충전하여 완전한 승기를 잡으십시오.`
-          : `내담자님, 방금 내어드린 판결은 팔자의 수많은 갈래 중 작은 물줄기 하나를 짚었을 뿐입니다. <strong>방금 나누신 무료 상담 내용까지 비책서에 정밀 요약 수록</strong>해 드리니, 1년 내내 꺼내보실 수 있는 맞춤 비책서로 진짜 다이아몬드를 손에 쥐십시오.`;
+          : `내담자님, 방금 내어드린 판결은 팔자의 수많은 갈래 중 작은 물줄기 하나를 짚었을 뿐입니다. <strong>방금 나누신 상담 내용까지 비책서에 정밀 요약 수록</strong>해 드리니, 1년 내내 꺼내보실 수 있는 맞춤 비책서로 진짜 다이아몬드를 손에 쥐십시오.`;
 
         leadHtml = `
           <div class="lead-box">
@@ -1047,6 +1048,7 @@
 
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+    // [상담창 질문 실행 로직: 무료/유료 심화 프롬프트 분기]
     async function executeChat() {
       const input = document.getElementById("chatUserMsg");
       const sendBtn = document.getElementById("chatSendBtn");
@@ -1058,9 +1060,10 @@
 
       const counselor = COUNSELORS[selectedCounselorKey] || COUNSELORS['hyean'];
 
+      // 택일 질문 감지 시 무료 답변에서 날짜 남발 차단 & 결제 단칼 유도 (단, 유료 세션일 경우 택일 날짜 정밀 산출)
       const isAskingTaekil = /(길일|날짜|택일|오픈일|이사날|결혼날|언제\s*오픈|언제\s*이사|언제\s*결혼)/.test(text);
 
-      if (isAskingTaekil) {
+      if (isAskingTaekil && !isPaidSession) {
         appendUserMessage(text);
         chatConversationHistory.push({ speaker: "내담자", text: text });
         input.value = "";
@@ -1069,14 +1072,14 @@
 내담자의 용신(用神)과 천을귀인이 임하는 일진을 12개월 중에서 대조하여 손재수(損財數)를 피하는 고도의 수리 연산이 필요합니다.
 
 따라서 구체적인 추천 대길일 Top 3 날짜와 피해야 할 절대 흉일표는 유료 정밀 분석 영역으로 분류되어 있습니다.
-아래 [1년 맞춤 비책 사주서] 또는 [심층 질문권]을 통해 내담자의 사주와 완벽히 합이 드는 진짜 길일을 확인하십시오.`;
+아래 [1년 맞춤 비책 사주서] 또는 [심층 질문권]을 충전하시어 가장 완벽한 길일을 손에 쥐십시오.`;
 
         appendAiMessage(taekilGuideText, true, false);
         return;
       }
 
       if (currentRemainQuestions <= 0) {
-        appendAiMessage("준비된 무료 질문권(2회)이 모두 소진되었습니다.", true, true);
+        appendAiMessage("준비된 질문권이 모두 소진되었습니다. 추가 질문권을 충전하시거나 비책서를 열람하십시오.", true, true);
         input.value = "";
         return;
       }
@@ -1099,7 +1102,27 @@
       const gender = document.querySelector('input[name="gender"]:checked') && document.querySelector('input[name="gender"]:checked').value === "male" ? "남성" : "여성";
       const mbti = (document.getElementById("userMbti") && document.getElementById("userMbti").value) || "미지정";
 
-      const loadingRow = appendAiMessage(`🔮 [${counselor.name}] 명인이 내담자의 사주 원국과 명식을 짚으며 심층 답변을 집필하고 있습니다...`);
+      // [메인 하단 4대 테마 실시간 연동]
+      let themeContext = "";
+      if (currentSelectedTheme === 'love') {
+        const tName = (document.getElementById("targetName") && document.getElementById("targetName").value.trim()) || "상대방";
+        const tYear = (document.getElementById("targetYear") && document.getElementById("targetYear").value) || "1992";
+        const tMonth = (document.getElementById("targetMonth") && document.getElementById("targetMonth").value) || "5";
+        const tDay = (document.getElementById("targetDay") && document.getElementById("targetDay").value) || "15";
+        const tGen = (document.getElementById("targetGender") && document.getElementById("targetGender").value === "male") ? "남성" : "여성";
+        const tCal = (document.querySelector('input[name="targetCal"]:checked') && document.querySelector('input[name="targetCal"]:checked').value === "lunar") ? "음력" : "양력";
+        themeContext = `\n[내담자가 사전 등록한 궁합 상대방 명식]\n- 상대방 이름: ${tName}\n- 상대방 생년월일: ${tYear}년 ${tMonth}월 ${tDay}일 (${tCal}, ${tGen})\n※ 반드시 위 상대방 명식과 내담자 명식의 오행 상성을 직접 대조하여 답하십시오. 절대로 "상대방 정보가 빠져 있다"는 말을 하지 마십시오.`;
+      } else if (currentSelectedTheme === 'taekil') {
+        const purpose = (document.getElementById("taekilPurpose") && document.getElementById("taekilPurpose").value) || "개업/오픈식";
+        const season = (document.getElementById("taekilSeason") && document.getElementById("taekilSeason").value.trim()) || "2026년 하반기";
+        themeContext = `\n[사전 등록된 택일 조건]\n- 목적: ${purpose}\n- 희망 시기: ${season}`;
+      } else if (currentSelectedTheme === 'business') {
+        themeContext = `\n[사전 등록 테마: 직장/사업/재물운]`;
+      } else {
+        themeContext = `\n[사전 등록 테마: 평생 대운 및 개운 비책]`;
+      }
+
+      const loadingRow = appendAiMessage(`🔮 [${counselor.name}] 명인이 내담자의 명식을 짚으며 직언을 집필하고 있습니다...`);
       sendBtn.disabled = true;
 
       if (!GEMINI_API_KEY || GEMINI_API_KEY === "") {
@@ -1109,26 +1132,51 @@
         return;
       }
 
-      const promptText = `당신은 '지음결(知音結) 정통 명리관'의 ${counselor.isVip ? '수석 VIP 직언·천기 명인' : '전문 상담가'} [${counselor.name}]입니다.
+      // [무료 vs 유료 프롬프트 완전 분리]
+      let promptText = "";
+      if (isPaidSession) {
+        // [유료 5문 심화 상담 모드: 장문, 원국 십신 정밀 분석, 2026년 세운 득실 완벽 판결]
+        promptText = `당신은 '지음결(知音結) 정통 명리관'의 ${counselor.isVip ? '수석 VIP 직언·천기 명인' : '전문 상담가'} [${counselor.name}]입니다.
+내담자는 유료 결제(또는 정식 심층 쿠폰)를 완료한 VIP 내담자입니다. 겉핥기식 요약이 아닌, 명리학적 깊이가 극대화된 [1:1 심층 상담 리포트] 형식으로 방대하고 상세하게 집필하십시오.
+
 내담자 정보:
 - 성함: ${userName}
 - 사주 명식: ${year}년 ${month}월 ${day}일 ${time} (${calTypeText}), ${gender}
-- 성격 심리(MBTI): ${mbti}
-- 주력 전문 분야: ${counselor.domain}
-- 말투 및 페르소나 기조: "${counselor.quote}"
+- 성향(MBTI): ${mbti}
+${themeContext}
+- 명인 말투: "${counselor.quote}"
+
+내담자의 심층 질문: "${text}"
+
+[VIP 유료 심층 작성 규칙]
+1. 현재 시점은 2026년 병오년(丙午年)입니다. 과거 연도(2024~2025)를 미래처럼 쓰지 마십시오.
+2. 유료 고객이므로 답변을 아끼지 마십시오. 분량은 공백 포함 800~1,000자 수준으로 풍성하고 상세하게 작성하십시오.
+3. 궁합 질문인 경우: 내담자와 상대방의 일간·일지 충합(천간합, 지지 육합/삼합, 원진살/충살)을 낱낱이 파헤치고, 속궁합과 성격적 마찰점, 그리고 2026년 하반기 결합 골든타임을 명쾌하게 제시하십시오.
+4. 택일 질문인 경우: 2026년 하반기 중 내담자의 용신과 귀인이 임하는 실제 추천 길일 2~3개 날짜와 피해야 할 흉일을 명시하십시오.
+5. 사업/진로 질문인 경우: 재물운의 흐름과 계약 성사 시기, 손재수 방어책을 일목요연하게 조목조목 짚어주십시오.
+6. 마지막은 유료 내담자를 위한 깊은 축언과 함께 문장을 온전히 매듭지으십시오.`;
+      } else {
+        // [무료 2회 체험 모드: 300자 내외 급소 타격, 3단 번호틀 폐기, 비책서 결제 유도]
+        promptText = `당신은 '지음결(知音結) 정통 명리관'의 ${counselor.isVip ? '수석 VIP 직언·천기 명인' : '전문 상담가'} [${counselor.name}]입니다.
+내담자는 무료 체험 질문자입니다.
+
+내담자 정보:
+- 성함: ${userName}
+- 사주 명식: ${year}년 ${month}월 ${day}일 ${time} (${calTypeText}), ${gender}
+- 성향(MBTI): ${mbti}
+${themeContext}
+- 명인 말투: "${counselor.quote}"
 
 내담자 질문: "${text}"
 
-[필수 규칙]
-1. 현재 시점은 2026년 병오년(丙午年)입니다. 과거 연도(2024~2025)를 미래나 올해처럼 언급하지 마십시오.
-2. 절대 도중에 말이 잘리지 않도록 400자 내외로 명쾌하게 완결지으십시오.
-3. 구성:
-   - 1. 원국 핵심 직언: 일간과 주요 십신 구조 한 줄 요약
-   - 2. 2026년(병오년) 세운 판결: 추진할 때와 멈출 때에 대한 명리학적 손익 단정
-   - 3. 실천 처방: 내담자가 즉시 행해야 할 핵심 조언 한 가지
-4. 마지막은 "더 깊은 12개월 월별 승부수와 손재수 방어책은 정밀 비책서에서 확인하십시오."로 끝맺으십시오.`;
+[무료 답변 작성 지침 - 엄격 준수]
+1. 현재 연도는 2026년 병오년(丙午年)입니다.
+2. 기계적인 '1. 원국, 2. 세운, 3. 처방' 번호 매기기를 절대 하지 마십시오.
+3. 궁합 질문인 경우: 위에 사전 등록된 상대방 명식을 바탕으로, 두 사람의 오행 상성과 충살 지점을 첫 문장에서 단도직입적으로 찌르십시오.
+4. 분량은 공백 포함 250~350자 내외로 핵심만 날카롭게 답하고, 문장이 도중에 잘리지 않도록 완벽한 마침표로 끝맺으십시오.
+5. 마지막 문장은 "두 분의 12개월 상세 월별 애정 곡선과 결정적 파국/결합 타이밍은 정밀 비책서에서 온전히 확인하십시오." 취지로 결제를 유도하며 매듭지으십시오.`;
+      }
 
-      // gemini-3.6-flash 단일 모델로만 3회 안전 재시도
       const chatModels = [
         "gemini-3.6-flash",
         "gemini-3.6-flash",
@@ -1147,7 +1195,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               contents: [{ role: "user", parts: [{ text: promptText }] }],
-              generationConfig: { maxOutputTokens: 2048, temperature: 0.7 }
+              generationConfig: { maxOutputTokens: isPaidSession ? 3000 : 1500, temperature: 0.7 }
             })
           });
 
@@ -1332,7 +1380,6 @@ ${chatHistoryContext}
 
 각 장은 반드시 '# 제1장 : ...' 형식의 헤더로 시작하십시오.`;
 
-      // 비책서 역시 gemini-3.6-flash 단일 모델로만 3회 안전 재시도
       const bicheckModels = [
         "gemini-3.6-flash",
         "gemini-3.6-flash",
@@ -1398,7 +1445,8 @@ ${chatHistoryContext}
 
         pdfTarget.innerHTML = bookHtml;
 
-        if (validatedActiveCoupon) {
+        // 만능 쿠폰이 아닌 일반 1회용 쿠폰일 경우에만 시트에서 소멸 처리
+        if (validatedActiveCoupon && validatedActiveCoupon !== "지음사주0000") {
           burnCouponOnGoogleSheet(validatedActiveCoupon);
           let burned = JSON.parse(localStorage.getItem("jieum_burned_coupons") || "[]");
           if (!burned.includes(validatedActiveCoupon)) {
@@ -1452,10 +1500,12 @@ ${chatHistoryContext}
         generateAndOpenBicheckViewer();
       } else {
         currentRemainQuestions += 5;
+        isPaidSession = true;
         openChatSessionDirect();
       }
     }
 
+    // [쿠폰 시스템: 지음사주0000 영구 만능 쿠폰 내장]
     async function applyCouponCode() {
       const btn = document.getElementById("btnApplyCoupon");
       const input = document.getElementById("couponInput");
@@ -1463,6 +1513,29 @@ ${chatHistoryContext}
       const code = input.value.trim().toUpperCase();
       if (!code) { alert("쿠폰 번호를 입력해 주세요."); return; }
 
+      // 1. [대표님 전용 영구 만능 쿠폰 검사]
+      if (code === "지음사주0000") {
+        isAuthorizedForReport = true; // 비책서 즉시 잠금 해제
+        currentRemainQuestions += 5; // 질문 5회 추가 충전
+        isPaidSession = true; // 유료 심화 상담 모드 활성화
+        validatedActiveCoupon = "지음사주0000";
+
+        const counselor = COUNSELORS[selectedCounselorKey] || COUNSELORS['hyean'];
+        const cModal = document.getElementById("couponModal");
+        if (cModal) cModal.style.display = "none";
+        input.value = "";
+
+        const actionModal = document.getElementById("actionChoiceModal");
+        if (actionModal) {
+          document.getElementById("choiceModalTitle").innerText = "🔑 관리자 영구 만능 쿠폰 승인 완료";
+          document.getElementById("choiceBookTitle").innerText = `📖 1년 맞춤 ${counselor.isVip ? 'VIP 심화' : '전문'} 비책 사주서 열람`;
+          document.getElementById("choiceConsultTitle").innerText = `💬 ${counselor.name} 1:1 심화 5문 질문권 (+5회 충전됨)`;
+          actionModal.style.display = "flex";
+        }
+        return;
+      }
+
+      // 2. 일반 쿠폰 소멸 여부 확인
       let usedCoupons = JSON.parse(localStorage.getItem("jieum_burned_coupons") || "[]");
       if (usedCoupons.includes(code)) {
         alert("이미 사용이 완료되어 소멸된 1회용 비책 쿠폰입니다. (재사용 불가)");
@@ -1477,6 +1550,7 @@ ${chatHistoryContext}
 
       let couponType = null;
 
+      // 3. 구글 스프레드시트 실시간 조회
       if (GOOGLE_APPS_SCRIPT_URL && GOOGLE_APPS_SCRIPT_URL.trim() !== "") {
         try {
           const res = await fetch(`${GOOGLE_APPS_SCRIPT_URL}?action=check&code=${encodeURIComponent(code)}`);
@@ -1523,6 +1597,7 @@ ${chatHistoryContext}
           usedCoupons.push(code);
           localStorage.setItem("jieum_burned_coupons", JSON.stringify(usedCoupons));
           validatedActiveCoupon = null;
+          isPaidSession = true;
           triggerPurchase("P_CONSULT");
         }
       } else {
